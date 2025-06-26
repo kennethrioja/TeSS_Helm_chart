@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tess.fullname" . }}-deployment
+  labels:
+    app: {{ include "tess.fullname" . }}
+    type: ror-app
+    chart: {{ include "tess.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ include "tess.fullname" . }}
+      type: ror-app
+  template:
+    metadata:
+      name: {{ include "tess.fullname" . }}-pod
+      labels:
+        app: {{ include "tess.fullname" . }}
+        type: ror-app
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-app
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          resources:
+            requests:
+              cpu: {{ .Values.app.requestCPU }}
+              memory: {{ .Values.app.requestMem }}
+            limits:
+              cpu: {{ .Values.app.limitCPU }}
+              memory: {{ .Values.app.limitMem }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: sidekiq-uploads
+              mountPath: /code/public/system
+            - name: logs
+              mountPath: /code/log
+            - name: {{ include "tess.fullname" . }}-config
+              subPath: {{ .Values.secrets.configTess }}
+              mountPath: /code/config/{{ .Values.secrets.configTess }}
+            - name: {{ include "tess.fullname" . }}-config
+              subPath: {{ .Values.secrets.configSecrets }}
+              mountPath: /code/config/{{ .Values.secrets.configSecrets }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.env }}
+          env:
+            - name: RAILS_ENV
+              value: production
+            - name: RAILS_LOG_TO_STDOUT
+              value: "true"
+            - name: RAILS_SERVE_STATIC_FILES
+              value: "true"
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.liveness.path }}
+              port: {{ .Values.app.port }}
+              scheme: HTTP
+            timeoutSeconds: 20
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+      imagePullSecrets:
+      - name: {{ .Values.secrets.imagePull }}
+      restartPolicy: Always
+      volumes:
+        - name: sidekiq-uploads
+          persistentVolumeClaim:
+            claimName: {{ .Values.sidekiq.pvc }}
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ .Values.logs.pvc }}
+        - name: {{ include "tess.fullname" . }}-config
+          secret:
+            secretName: {{ .Values.secrets.config }}
+            items:
+              - key: {{ .Values.secrets.configTess }}
+                path: {{ .Values.secrets.configTess }}
+              - key: {{ .Values.secrets.configSecrets }}
+                path: {{ .Values.secrets.configSecrets }}

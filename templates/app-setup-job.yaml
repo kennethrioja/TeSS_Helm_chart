@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "tess.fullname" . }}-setup-job
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+        - name: setup
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for DB..." &&
+              until bundle exec rails db:prepare; do
+                echo "DB not ready. Retrying...";
+                sleep 5;
+              done &&
+
+              echo "Running migrations..." &&
+              bundle exec rails db:migrate &&
+
+              echo "Precompiling assets..." &&
+              bundle exec rake assets:clean &&
+              bundle exec rake assets:precompile &&
+
+              echo "Reindexing Solr..." &&
+              bundle exec rake tess:reindex
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.env }}
+          env:
+            - name: RAILS_ENV
+              value: production
+          volumeMounts:
+          - name: sidekiq-uploads
+            mountPath: /code/public/system
+          - name: {{ include "tess.fullname" . }}-config
+            subPath: {{ .Values.secrets.configTess }}
+            mountPath: /code/config/{{ .Values.secrets.configTess }}
+          - name: {{ include "tess.fullname" . }}-config
+            subPath: {{ .Values.secrets.configSecrets }}
+            mountPath: /code/config/{{ .Values.secrets.configSecrets }}
+      imagePullSecrets:
+      - name: {{ .Values.secrets.imagePull }}
+      restartPolicy: Never
+      volumes:
+        - name: sidekiq-uploads
+          persistentVolumeClaim:
+            claimName: {{ .Values.sidekiq.pvc }}
+        - name: {{ include "tess.fullname" . }}-config
+          secret:
+            secretName: {{ .Values.secrets.config }}
+            items:
+              - key: {{ .Values.secrets.configTess }}
+                path: {{ .Values.secrets.configTess }}
+              - key: {{ .Values.secrets.configSecrets }}
+                path: {{ .Values.secrets.configSecrets }}

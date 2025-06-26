@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidekiq-deployment
+  labels:
+    app: sidekiq
+    type: jobs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sidekiq
+      type: jobs
+  template:
+    metadata:
+      name: sidekiq-pod
+      labels:
+        app: sidekiq
+        type: jobs
+    spec:
+      containers:
+        - name: {{ include "tess.fullname" . }}-sidekiq
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          resources:
+            requests:
+              cpu: {{ .Values.sidekiq.requestCPU }}
+              memory: {{ .Values.sidekiq.requestMem }}
+            limits:
+              cpu: {{ .Values.sidekiq.limitCPU }}
+              memory: {{ .Values.sidekiq.limitMem }}
+          args:
+            - bundle
+            - exec
+            - sidekiq
+          volumeMounts:
+            - name: sidekiq-uploads
+              mountPath: /code/public/system
+            - name: {{ include "tess.fullname" . }}-config
+              subPath: {{ .Values.secrets.configTess }}
+              mountPath: /code/config/{{ .Values.secrets.configTess }}
+            - name: {{ include "tess.fullname" . }}-config
+              subPath: {{ .Values.secrets.configSecrets }}
+              mountPath: /code/config/{{ .Values.secrets.configSecrets }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.env }}
+          env:
+            - name: RAILS_ENV
+              value: production
+      imagePullSecrets:
+        - name: {{ .Values.secrets.imagePull}}
+      restartPolicy: Always
+      volumes:
+        - name: sidekiq-uploads
+          persistentVolumeClaim:
+            claimName: {{ .Values.sidekiq.pvc }}
+        - name: {{ include "tess.fullname" . }}-config
+          secret:
+            secretName: {{ .Values.secrets.config }}
+            items:
+              - key: {{ .Values.secrets.configTess }}
+                path: {{ .Values.secrets.configTess }}
+              - key: {{ .Values.secrets.configSecrets }}
+                path: {{ .Values.secrets.configSecrets }}

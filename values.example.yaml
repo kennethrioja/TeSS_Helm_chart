@@ -1,0 +1,75 @@
+replicas: 1
+
+image:
+  repository: ghcr.io/YOUR_GITHUB_USERNAME/IMAGE_NAME
+  tag: "0.1.0"
+
+app:
+  host: localhost
+  port: 3000
+  requestCPU: 500m
+  limitCPU: 800m
+  requestMem: 512Mi
+  limitMem: 768Mi
+  probes:
+    liveness:
+      path: /up
+
+secrets:
+  env: app-secrets-env
+  config: app-secrets-config
+  configTess: tess.yml
+  configSecrets: secrets.yml
+  imagePull: app-secrets-ghcr
+
+backup:
+  image: postgres:14-alpine
+  schedule: "0 2 * * 1" # 2AM on Monday
+  pvc: backup-pvc
+  pvcStorage: 10Gi
+
+db:
+  port: 5432
+  image: postgres:14.2
+  requestCPU: 50m
+  limitCPU: 100m
+  requestMem: 64Mi
+  limitMem: 128Mi
+  pvc: db-pvc
+  pvcStorage: 20Gi
+  service: db-service
+
+logs:
+  pvc: logs-pvc
+  pvcStorage: 5Gi
+
+redis:
+  port: 6379
+  image: redis:6
+  requestCPU: 50m
+  limitCPU: 100m
+  requestMem: 32Mi
+  limitMem: 64Mi
+  pvc: redis-pvc
+  pvcStorage: 2Gi
+  service: redis-service
+
+sidekiq:
+  requestCPU: 20m
+  limitCPU: 40m
+  requestMem: 512Mi
+  limitMem: 768Mi
+  pvc: sidekiq-uploads-pvc
+  pvcStorage: 10Gi
+
+solr:
+  port: 8983
+  image: solr:8
+  requestCPU: 200m
+  limitCPU: 400m
+  requestMem: 768Mi
+  limitMem: 1Gi
+  pvc: solr-pvc
+  pvcStorage: 20Gi
+  cm: solr-cm
+  service: solr-service

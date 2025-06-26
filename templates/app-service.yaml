@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tess.fullname" . }}-service
+spec:
+  selector:
+    app: {{ include "tess.fullname" . }}
+    type: ror-app
+  ports:
+    - name: {{ .Values.app.port | quote }}
+      port: {{ .Values.app.port }}
+      targetPort: {{ .Values.app.port }}

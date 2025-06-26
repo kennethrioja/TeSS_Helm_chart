@@ -1,0 +1,20 @@
+-
+🎉 {{ .Chart.Name }} has been successfully deployed!
+
+🚀 Helm Release:
+  {{ .Release.Name }}, for more info :
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+⚙️ Namespace:
+  {{ .Release.Namespace }}
+
+🌍 Access the application at:
+  https://{{ .Values.app.host }}
+
+📋 To monitor logs:
+  kubectl logs -n {{ .Release.Namespace }} deployment/{{ include "tess.fullname" . }}-deployment
+
+🧼 To uninstall:
+  helm uninstall {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+  -

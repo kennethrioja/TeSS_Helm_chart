@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solr-deployment
+  labels:
+    app: solr
+    type: search
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: solr
+      type: search
+  template:
+    metadata:
+      name: solr-pod
+      labels:
+        app: solr
+        type: search
+    spec:
+      containers:
+        - name: {{ include "tess.fullname" . }}-solr
+          image: {{ .Values.solr.image }}
+          resources:
+            requests:
+              cpu: {{ .Values.solr.requestCPU }}
+              memory: {{ .Values.solr.requestMem }}
+            limits:
+              cpu: {{ .Values.solr.limitCPU }}
+              memory: {{ .Values.solr.limitMem }}
+          ports:
+            - containerPort: {{ .Values.solr.port }}
+          args:
+            - solr-precreate
+            - tess
+            - /opt/solr/server/solr/configsets/production
+          volumeMounts:
+            - name: solr-data
+              mountPath: /var/solr
+            - name: solr-configset
+              mountPath: /opt/solr/server/solr/configsets/production
+              readOnly: true
+            - name: dshm
+              mountPath: /dev/shm
+      restartPolicy: Always
+      volumes:
+        - name: solr-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.solr.pvc }}
+        - name: solr-configset
+          configMap:
+            name: {{ .Values.solr.cm }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: "1Gi"
