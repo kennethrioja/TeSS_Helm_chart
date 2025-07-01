@@ -76,7 +76,10 @@ Sign in to the Container registry, execute the command below in your terminal, c
 
 Execute the following command in your terminal at the root of your `TeSS` directory, do not forget to change it with your own GitHub username, the name you want to give to your image and change the tag when you re/build it:
 
-    docker build -f Dockerfile-k8 . -t ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 --platform linux/amd64,linux/arm64
+    docker build \
+        --build-arg CR="True" \
+        --tag ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 \
+        --platform linux/amd64,linux/arm64
 
 To check that your image does not contain any credentials/sensitive information, you can locally run your image with the following command:
 
