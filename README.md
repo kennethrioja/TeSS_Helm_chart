@@ -4,7 +4,7 @@ A Helm chart for deploying **[TeSS (Training e-Support Service)](https://github.
 
 ## Overview
 
-This Helm chart deploys [TeSS](https://github.com/ElixirTeSS/TeSS) (v.1.5.0 at the time of writing this document) onto a Kubernetes/OpenShift cluster.
+This Helm chart deploys [TeSS](https://github.com/ElixirTeSS/TeSS) using a Kubernetes/OpenShift cluster.
 
 DISCLAIMER: for the database backup, `kartoza:pg-backup:14-3.1` was not used in Kubernetes because of file system permissions issues, instead we used `pg_dump` along with a k8 cronjob that performs a backup on Monday at 2:00AM (see `templates/backup-cronjob.yaml`). To see how to access the backups see [backup section](#backup)
 
@@ -42,7 +42,7 @@ There are some modifications to be aware of:
 
 1. In `.env`, Solr and Redis URL must be labelled with `-service` when deploying through Kubernetes:
 
-    SOLR_URL=http://solr-service:8983/solr/tess
+    SOLR_URL=<http://solr-service:8983/solr/tess>
     REDIS_URL=redis://redis-service:6379/1
     REDIS_TEST_URL=redis://redis-service:6379/0
 
@@ -76,22 +76,13 @@ Sign in to the Container registry, execute the command below in your terminal, c
 
 Execute the following command in your terminal at the root of your `TeSS` directory, do not forget to change it with your own GitHub username, the name you want to give to your image and change the tag when you re/build it:
 
-    docker build \
-        --build-arg CR="True" \
-        --tag ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 \
-        --platform linux/amd64,linux/arm64
+    docker build -f Dockerfile . --build-arg CR="True" -t ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 --platform linux/amd64,linux/arm64
 
-To check that your image does not contain any credentials/sensitive information, you can locally run your image with the following command:
+To check that your image does not contain any credentials/sensitive information, you can run a `find` command in your image with the following command:
 
-    docker run --rm -it ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 /bin/bash
+    docker run --rm -it ghcr.io/YOUR_GITHUB_USERNAME/YOUR_IMAGE_NAME:0.1.0 find -L \( -path "./*tess*" -o -path "./*secrets*" -o -path "./*env*" \) | grep -iw ".env\|tess.yml\|secrets.yml"
 
-Check for `.env`, `config/tess.yml` and `config/secrets.yml`, once inside your image, when running these commands, you should not see the aforementioned files:
-
-    find -L config -name "tess*"
-    find -L config -name "secrets*"
-    find -L . -name "*env*"
-
-Press `control + D` to exit.
+The output should only show `env.sample` and another `tess.yml` files.
 
 Now that you are sure that neither `.env`, `tess.yml` nor `secrets.yml` are baked in your image you can push it on `ghcr.io`. Back to your terminal, you can execute this command:
 
@@ -124,7 +115,7 @@ You must change at least three fields:
 
 - `image.repository` : change it with the image repository and change with your username and repo name
 - `image.tag` : change it with the tag of your image
-- `app.host` : it should be the same as `base_url` in `tess.yml`
+- `app.host` : it should be the same as `base_url` in `tess.yml` and without the `https://`
 
 ### Configure `Chart.yaml`
 
