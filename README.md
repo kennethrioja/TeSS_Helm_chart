@@ -42,13 +42,15 @@ There are some modifications to be aware of:
 
 1. In `.env`, Solr and Redis URL must be labelled with `-service` when deploying through Kubernetes:
 
-    SOLR_URL=<http://solr-service:8983/solr/tess>
-    REDIS_URL=redis://redis-service:6379/1
-    REDIS_TEST_URL=redis://redis-service:6379/0
+```
+SOLR_URL=<http://solr-service:8983/solr/tess>
+REDIS_URL=redis://redis-service:6379/1
+REDIS_TEST_URL=redis://redis-service:6379/0
+```
 
-2. In `.env`, Database host should be set up with `DB_HOST=db-service`, be sure also to have same port in `.env` and in `db.port` of `values.yaml`.
+3. In `.env`, Database host should be set up with `DB_HOST=db-service`, be sure also to have same port in `.env` and in `db.port` of `values.yaml`.
 
-3. In `tess.yml` change `base_url` with your final URL.
+4. In `tess.yml` change `base_url` with your final URL.
 
 ### Build and push your TeSS image in a container registry
 
