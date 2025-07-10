@@ -37,6 +37,8 @@ spec:
           volumeMounts:
             - name: sidekiq-uploads
               mountPath: /code/public/system
+            - name: sidekiq-tmp
+              mountPath: /code/tmp
             - name: {{ include "tess.fullname" . }}-config
               subPath: {{ .Values.secrets.configTess }}
               mountPath: /code/config/{{ .Values.secrets.configTess }}
@@ -55,7 +57,10 @@ spec:
       volumes:
         - name: sidekiq-uploads
           persistentVolumeClaim:
-            claimName: {{ .Values.sidekiq.pvc }}
+            claimName: {{ .Values.sidekiq.pvcUploads }}
+        - name: sidekiq-tmp
+          persistentVolumeClaim:
+            claimName: {{ .Values.sidekiq.pvcTmp }}
         - name: {{ include "tess.fullname" . }}-config
           secret:
             secretName: {{ .Values.secrets.config }}
