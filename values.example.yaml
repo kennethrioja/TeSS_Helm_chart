@@ -55,12 +55,14 @@ redis:
   service: redis-service
 
 sidekiq:
-  requestCPU: 20m
-  limitCPU: 40m
+  requestCPU: 80m
+  limitCPU: 120m
   requestMem: 512Mi
   limitMem: 768Mi
-  pvc: sidekiq-uploads-pvc
-  pvcStorage: 10Gi
+  pvcUploads: sidekiq-uploads-pvc
+  pvcUploadsStorage: 10Gi
+  pvcTmp: sidekiq-tmp-pvc
+  pvcTmpStorage: 10Gi
 
 solr:
   port: 8983

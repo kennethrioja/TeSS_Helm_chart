@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.sidekiq.pvcUploads }}
+  name: {{ .Values.sidekiq.pvcTmp }}
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.sidekiq.pvcUploadsStorage }}
+      storage: {{ .Values.sidekiq.pvcTmpStorage }}
