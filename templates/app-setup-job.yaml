@@ -4,9 +4,9 @@ metadata:
   name: {{ include "tess.fullname" . }}-setup-job
 spec:
   backoffLimit: 3
+  ttlSecondsAfterFinished: 0
   template:
     spec:
-      ttlSecondsAfterFinished: 0
       containers:
         - name: setup
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -21,10 +21,7 @@ spec:
 
               echo "Running migrations..." &&
               bundle exec rails db:migrate &&
-
-              echo "Precompiling assets..." &&
-              bundle exec rake assets:clean &&
-              bundle exec rake assets:precompile &&
+              bundle exec rake tmp:clear &&
 
               echo "Reindexing Solr..." &&
               bundle exec rake tess:reindex
@@ -49,7 +46,7 @@ spec:
       volumes:
         - name: sidekiq-uploads
           persistentVolumeClaim:
-            claimName: {{ .Values.sidekiq.pvc }}
+            claimName: {{ .Values.sidekiq.pvcUploads }}
         - name: {{ include "tess.fullname" . }}-config
           secret:
             secretName: {{ .Values.secrets.config }}
